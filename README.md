@@ -38,3 +38,16 @@
    ```
 
 3. Deploy to app server
+
+##### Adding JPA Capability
+
+###### Adding the spring-boot-starter-data-jpa Dependency
+
+- Adds Spring JDBC / Transaction Management
+- Adds Spring ORM
+- Adds Hibernate / entity manager
+- Adds Spring Data JPA subproject
+
+###### Does NOT add a Database Driver
+
+- Add one manualy
