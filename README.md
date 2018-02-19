@@ -6,6 +6,8 @@
 - [Spring Cloud reference](http://projects.spring.io/spring-cloud/docs/1.0.1/spring-cloud.html)
 - [Lab1](https://github.com/kennyk65/Microservices-With-Spring-Student-Files/blob/master/LabInstructions/Lab%201.md#lab-1---spring-boot)
 - [Lab4](https://github.com/kennyk65/Microservices-With-Spring-Student-Files/blob/master/LabInstructions/Lab%204.md)
+- [Lab5](https://github.com/kennyk65/Microservices-With-Spring-Student-Files/blob/master/LabInstructions/Lab%205.md)
+- [Lab6](https://github.com/kennyk65/Microservices-With-Spring-Student-Files/blob/master/LabInstructions/Lab%206.md)
 
 #### Introduction
 
@@ -302,7 +304,7 @@ Client after registration becomes a consumer of service registry.
 
 ###### Ribbon
 
-- Client side load balancer
+- Client side load balancer - clients selects a server based on some criteria
 - Automatically integrates with service discovery (Eureka)
 - Built in failure resiliency (Hystrix)
 - Caching / Batching
@@ -347,4 +349,88 @@ Client after registration becomes a consumer of service registry.
   </dependency>
   ```
 
-- Low level usage
+- Low level usage. Ribbon API.
+
+  ```java
+  public class MyClass{
+    @Autowired
+    LoadBalancerClient loadBalancer;
+    
+    public void doStuff(){
+      ServiceInstance instance = loadBalancer.choose("subject");
+      URI subjectUri = URI.create(String.format("http://%s:%s", instance.getHost(), instance.getPort()));
+      
+      // ...
+    } 
+    
+  }
+  ```
+
+- Customizing
+
+  - [ribbon java-docs](http://netflix.github.io/ribbon/ribbon-core-javadoc/index.html)
+  - [ribbon source code ](https://github.com/Netflix/ribbon)
+
+  ```java
+  // declare ribbon client and config
+  //DO NOT COMPONENT SCAN
+  @Configuration
+  @RibbonClient(name="subject", configuration=SubjectConfig.class)
+  public class MainConfig{
+    
+  }
+
+  @Configuration
+  public class SubjectConfig{
+    @Bean
+    public IPing ribbonPing(IClientConfig config){
+      return new PingURL();
+    }
+  } 
+  ```
+
+##### Feign
+
+- Declarative REST client from NetFlix
+- Alternative to RestTemplate
+- How doest it work?
+  - Define interfaces for your REST client code
+  - Annotate interface with Feign annotation
+  - Annotate methods with String MVC annotations
+    - Other implementations like JAX/RS pluggable
+
+1. Add dependecy
+
+   ```xml
+   <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-feign</artifactId>
+   </dependency>
+   ```
+
+2. Create an Interface
+
+   ```java
+   @FeignClient(url="localhost:8080/warehouse") //will be replaced with Eureka client ID 
+   public interface InventoryClient{
+     @RequestMapping(method = RequestMethod.GET, value = "/inventory")
+     List<Item> getItems();
+     
+     @RequestMapping(method = RequestMethod.POST,
+                    value = "/inventory/{sku}",
+                    consumes = "application/json")
+     void update(@PathVariable("sku") Long sku, @RequestBody Item item)
+   }
+   ```
+
+3. Enable Feign
+
+   ```java
+   @SpringBootApplication
+   @EnableFeignClients
+   public class Application{
+     //...
+   }
+   ```
+
+   ​
